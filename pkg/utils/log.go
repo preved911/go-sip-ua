@@ -34,11 +34,18 @@ func (ml *MyLogger) Level() string {
 }
 
 var (
-	loggers map[string]*MyLogger
+	loggers   map[string]*MyLogger
+	formatter logrus.Formatter
 )
 
 func init() {
 	loggers = make(map[string]*MyLogger)
+	formatter = &prefixed.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: "2006-01-02 15:04:05.000",
+		ForceColors:     true,
+		ForceFormatting: true,
+	}
 }
 
 func NewLogrusLogger(level log.Level, prefix string, fields log.Fields) log.Logger {
@@ -47,12 +54,7 @@ func NewLogrusLogger(level log.Level, prefix string, fields log.Fields) log.Logg
 	}
 	l := logrus.New()
 	l.Level = logrus.ErrorLevel
-	l.Formatter = &prefixed.TextFormatter{
-		FullTimestamp:   true,
-		TimestampFormat: "2006-01-02 15:04:05.000",
-		ForceColors:     true,
-		ForceFormatting: true,
-	}
+	l.Formatter = formatter
 	l.SetReportCaller(true)
 	logger := log.NewLogrusLogger(l, "main", fields)
 	loggers[prefix] = &MyLogger{
@@ -61,6 +63,10 @@ func NewLogrusLogger(level log.Level, prefix string, fields log.Fields) log.Logg
 	}
 	logger.SetLevel(level)
 	return logger.WithPrefix(prefix)
+}
+
+func SetFormatter(f logrus.Formatter) {
+	formatter = f
 }
 
 func SetLogLevel(prefix string, level log.Level) error {
